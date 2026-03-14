@@ -65,6 +65,14 @@ if (WITH_TLS)
 		pkg_check_modules(MBEDTLS REQUIRED mbedtls)
 		add_definitions("-DWITH_TLS_MBEDTLS")
 		set(OPENSSL_INCLUDE_DIR "")
+		# Provide OpenSSL::SSL as an alias for mbedtls so that
+		# subdirectory CMakeLists.txt files linking OpenSSL::SSL
+		# get mbedtls when the mbedtls backend is selected.
+		add_library(OpenSSL::SSL INTERFACE IMPORTED GLOBAL)
+		set_target_properties(OpenSSL::SSL PROPERTIES
+			INTERFACE_LINK_LIBRARIES "${MBEDTLS_LIBRARIES}"
+			INTERFACE_INCLUDE_DIRECTORIES "${MBEDTLS_INCLUDE_DIRS}"
+		)
 	else()
 		find_package(OpenSSL REQUIRED)
 		add_definitions("-DWITH_TLS_OPENSSL")
