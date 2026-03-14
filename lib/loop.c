@@ -71,8 +71,10 @@ int mosquitto_loop(struct mosquitto *mosq, int timeout, int max_packets)
 		if(mosq->want_write){
 			FD_SET((unsigned int)mosq->sock, &writefds);
 		}else{
-#ifdef WITH_TLS
+#ifdef WITH_TLS_OPENSSL
 			if(mosq->ssl == NULL || SSL_is_init_finished(mosq->ssl))
+#elif defined(WITH_TLS_MBEDTLS)
+			if(mosq->mbedtls == NULL || mosq->mbedtls->configured)
 #endif
 			{
 				COMPAT_pthread_mutex_lock(&mosq->out_packet_mutex);
