@@ -87,7 +87,15 @@ static FILE *mpw_tmpfile(void)
 	int fd;
 	size_t i;
 
-	if(RAND_bytes(tmpfile_path, sizeof(tmpfile_path)) != 1){
+	if(
+#ifdef WITH_TLS_OPENSSL
+		RAND_bytes(tmpfile_path, sizeof(tmpfile_path)) != 1
+#elif defined(WITH_TLS_MBEDTLS)
+		getrandom(tmpfile_path, sizeof(tmpfile_path), 0) != (ssize_t)sizeof(tmpfile_path)
+#else
+		0
+#endif
+	){
 		return NULL;
 	}
 
@@ -459,12 +467,14 @@ int main(int argc, char *argv[])
 	signal(SIGINT, handle_sigint);
 	signal(SIGTERM, handle_sigint);
 
+#ifdef WITH_TLS_OPENSSL
 #if OPENSSL_VERSION_NUMBER < 0x10100000L || OPENSSL_API_COMPAT < 0x10100000L
 	OpenSSL_add_all_digests();
 #else
 	OPENSSL_init_crypto(OPENSSL_INIT_ADD_ALL_CIPHERS \
 			| OPENSSL_INIT_ADD_ALL_DIGESTS \
 			| OPENSSL_INIT_LOAD_CONFIG, NULL);
+#endif
 #endif
 
 	if(argc == 1){

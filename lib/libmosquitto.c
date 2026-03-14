@@ -235,8 +235,12 @@ int mosquitto_reinitialise(struct mosquitto *mosq, const char *id, bool clean_st
 	mosq->user_mbedtls = NULL;
 #	endif
 #endif
-#ifdef WITH_TLS
+#ifdef WITH_TLS_OPENSSL
 	mosq->tls_cert_reqs = SSL_VERIFY_PEER;
+#elif defined(WITH_TLS_MBEDTLS)
+	mosq->tls_cert_reqs = 1; /* MBEDTLS_SSL_VERIFY_REQUIRED */
+#endif
+#ifdef WITH_TLS
 	mosq->tls_insecure = false;
 	mosq->want_write = false;
 	mosq->tls_ocsp_required = false;
@@ -309,6 +313,7 @@ void mosquitto__destroy(struct mosquitto *mosq)
 	mosquitto_FREE(mosq->tls_psk);
 	mosquitto_FREE(mosq->tls_psk_identity);
 	mosquitto_FREE(mosq->tls_alpn);
+#ifdef WITH_TLS_OPENSSL
 #ifndef OPENSSL_NO_ENGINE
 	mosquitto_FREE(mosq->tls_engine);
 #endif
