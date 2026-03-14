@@ -161,7 +161,7 @@ int net__init(void)
 
 void net__cleanup(void)
 {
-#ifdef WITH_TLS
+#ifdef WITH_TLS_OPENSSL
 	cleanup_ui_method();
 	if(is_tls_initialized){
 		is_tls_initialized = false;
@@ -177,7 +177,7 @@ void net__cleanup(void)
 #endif
 }
 
-#ifdef WITH_TLS
+#ifdef WITH_TLS_OPENSSL
 
 
 void net__init_tls(void)
@@ -220,7 +220,7 @@ int net__socket_close(struct mosquitto *mosq)
 #endif
 
 	assert(mosq);
-#ifdef WITH_TLS
+#ifdef WITH_TLS_OPENSSL
 #if defined(WITH_BROKER) && defined(WITH_WEBSOCKETS) && WITH_WEBSOCKETS == WS_IS_LWS
 	if(!mosq->wsi)
 #endif
@@ -233,6 +233,8 @@ int net__socket_close(struct mosquitto *mosq)
 			mosq->ssl = NULL;
 		}
 	}
+#elif defined(WITH_TLS_MBEDTLS)
+	mosquitto__mbedtls_cleanup(mosq);
 #endif
 
 #if defined(WITH_BROKER) && defined(WITH_WEBSOCKETS) && WITH_WEBSOCKETS == WS_IS_LWS
@@ -576,7 +578,7 @@ int net__try_connect(const char *host, uint16_t port, mosq_sock_t *sock, const c
 }
 
 
-#ifdef WITH_TLS
+#ifdef WITH_TLS_OPENSSL
 
 
 void net__print_ssl_error(struct mosquitto *mosq, const char *msg)
@@ -620,7 +622,7 @@ int net__socket_connect_tls(struct mosquitto *mosq)
 #endif
 
 
-#ifdef WITH_TLS
+#ifdef WITH_TLS_OPENSSL
 
 
 static int net__tls_load_ca(struct mosquitto *mosq)
@@ -1001,8 +1003,7 @@ int net__socket_connect(struct mosquitto *mosq, const char *host, uint16_t port,
 }
 
 
-#ifdef WITH_TLS
-
+#ifdef WITH_TLS_OPENSSL
 
 static void net__handle_ssl(struct mosquitto *mosq, int ret)
 {
@@ -1033,12 +1034,12 @@ static void net__handle_ssl(struct mosquitto *mosq, int ret)
 
 ssize_t net__read(struct mosquitto *mosq, void *buf, size_t count)
 {
-#ifdef WITH_TLS
+#ifdef WITH_TLS_OPENSSL
 	int ret;
 #endif
 	assert(mosq);
 	errno = 0;
-#ifdef WITH_TLS
+#ifdef WITH_TLS_OPENSSL
 	if(mosq->ssl){
 		ERR_clear_error();
 		ret = SSL_read(mosq->ssl, buf, (int)count);
@@ -1046,6 +1047,10 @@ ssize_t net__read(struct mosquitto *mosq, void *buf, size_t count)
 			net__handle_ssl(mosq, ret);
 		}
 		return (ssize_t )ret;
+	}else
+#elif defined(WITH_TLS_MBEDTLS)
+	if(mosq->mbedtls){
+		return mosquitto__mbedtls_read(mosq, buf, count);
 	}else
 #endif
 	{
@@ -1062,13 +1067,13 @@ ssize_t net__read(struct mosquitto *mosq, void *buf, size_t count)
 
 ssize_t net__write(struct mosquitto *mosq, const void *buf, size_t count)
 {
-#ifdef WITH_TLS
+#ifdef WITH_TLS_OPENSSL
 	int ret;
 #endif
 	assert(mosq);
 
 	errno = 0;
-#ifdef WITH_TLS
+#ifdef WITH_TLS_OPENSSL
 	if(mosq->ssl){
 		ERR_clear_error();
 		mosq->want_write = false;
@@ -1079,6 +1084,10 @@ ssize_t net__write(struct mosquitto *mosq, const void *buf, size_t count)
 		return (ssize_t )ret;
 	}else
 	/* Call normal write/send */
+#elif defined(WITH_TLS_MBEDTLS)
+	if(mosq->mbedtls){
+		return mosquitto__mbedtls_write(mosq, buf, count);
+	}else
 #endif
 	{
 		return send(mosq->sock, buf, count, MSG_NOSIGNAL);
@@ -1249,8 +1258,10 @@ int net__socketpair(mosq_sock_t *pairR, mosq_sock_t *pairW)
 
 void *mosquitto_ssl_get(struct mosquitto *mosq)
 {
-#ifdef WITH_TLS
+#ifdef WITH_TLS_OPENSSL
 	return mosq->ssl;
+#elif defined(WITH_TLS_MBEDTLS)
+	return mosq->mbedtls;
 #else
 	UNUSED(mosq);
 
