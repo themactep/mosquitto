@@ -42,7 +42,7 @@ Contributors:
 static int mosquitto__parse_socks_url(struct mosq_config *cfg, char *url);
 #endif
 static int client_config_line_proc(struct mosq_config *cfg, int pub_or_sub, int argc, char *argv[]);
-#ifdef WITH_TLS
+#ifdef WITH_TLS_OPENSSL
 static void tls_keylog_callback(const SSL *ssl, const char *line);
 static int tls_ex_index_cfg = -1;
 #endif
@@ -1352,6 +1352,7 @@ static int client_tls_opts_set(struct mosquitto *mosq, struct mosq_config *cfg)
 		return MOSQ_ERR_SUCCESS;
 	}
 
+#ifdef WITH_TLS_OPENSSL
 	if(cfg->tls_keylog){
 		if(tls_ex_index_cfg == -1){
 			tls_ex_index_cfg = SSL_CTX_get_ex_new_index(0, "client config", NULL, NULL, NULL);
@@ -1369,6 +1370,7 @@ static int client_tls_opts_set(struct mosquitto *mosq, struct mosq_config *cfg)
 		mosquitto_int_option(mosq, MOSQ_OPT_SSL_CTX_WITH_DEFAULTS, 1);
 		SSL_CTX_set_keylog_callback(cfg->ssl_ctx, tls_keylog_callback);
 	}
+#endif
 
 	if(cfg->cafile || cfg->capath){
 		rc = mosquitto_tls_set(mosq, cfg->cafile, cfg->capath, cfg->certfile, cfg->keyfile, NULL);
@@ -1796,7 +1798,7 @@ void err_printf(const struct mosq_config *cfg, const char *fmt, ...)
 	va_end(va);
 }
 
-#ifdef WITH_TLS
+#ifdef WITH_TLS_OPENSSL
 
 
 static void tls_keylog_callback(const SSL *ssl, const char *line)

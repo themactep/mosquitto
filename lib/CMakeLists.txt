@@ -53,7 +53,16 @@ set(C_SRC
 set(LIBRARIES common-options libmosquitto_common)
 
 if(WITH_TLS)
-	set (LIBRARIES ${LIBRARIES} OpenSSL::SSL)
+	if(WITH_TLS_BACKEND STREQUAL "mbedtls")
+		list(APPEND C_SRC tls_mbedtls.c tls_mbedtls.h)
+		if(MBEDTLS_LIBRARIES)
+			set(LIBRARIES ${LIBRARIES} ${MBEDTLS_LIBRARIES})
+		else()
+			set(LIBRARIES ${LIBRARIES} mbedtls mbedx509 mbedcrypto)
+		endif()
+	else()
+		set (LIBRARIES ${LIBRARIES} OpenSSL::SSL)
+	endif()
 endif()
 
 if(WIN32)
