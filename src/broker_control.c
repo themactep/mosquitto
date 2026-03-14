@@ -153,7 +153,7 @@ static int add_listener(cJSON *j_listeners, struct mosquitto__listener *listener
 	}
 
 #ifdef WITH_TLS
-	if(cJSON_AddBoolToObject(j_listener, "tls", listener->ssl_ctx != NULL) == NULL
+	if(cJSON_AddBoolToObject(j_listener, "tls", LISTENER_HAS_TLS(listener)) == NULL
 			){
 
 		return MOSQ_ERR_NOMEM;

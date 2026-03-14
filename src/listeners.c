@@ -68,7 +68,7 @@ void listeners__reload_all_certificates(void)
 #ifdef WITH_TLS
 	for(int i=0; i<db.config->listener_count; i++){
 		struct mosquitto__listener *listener = &db.config->listeners[i];
-		if(listener->ssl_ctx && listener->certfile && listener->keyfile){
+		if(LISTENER_HAS_TLS(listener) && listener->certfile && listener->keyfile){
 			int rc = net__load_certificates(listener);
 			if(rc){
 				log__printf(NULL, MOSQ_LOG_ERR, "Error when reloading certificate '%s' or key '%s'.",

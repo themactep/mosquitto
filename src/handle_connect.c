@@ -976,7 +976,7 @@ static int handle_username_from_cert_options(struct mosquitto *context, char **u
 {
 	int rc;
 
-#ifdef WITH_TLS
+#ifdef WITH_TLS_OPENSSL
 	if(LISTENER_HAS_TLS(context->listener) && (context->listener->use_identity_as_username || context->listener->use_subject_as_username)){
 		/* Don't need the username or password if provided */
 		mosquitto_FREE(*username);
@@ -1004,7 +1004,7 @@ static int handle_username_from_cert_options(struct mosquitto *context, char **u
 			}
 		}
 	}else
-#endif /* WITH_TLS */
+#endif /* WITH_TLS_OPENSSL */
 	{
 #ifdef WITH_TLS
 		if(context->listener->use_identity_as_username && context->listener->require_certificate){
