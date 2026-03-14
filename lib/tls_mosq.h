@@ -19,13 +19,15 @@ Contributors:
 #ifndef TLS_MOSQ_H
 #define TLS_MOSQ_H
 
-#ifdef WITH_TLS
+#ifdef WITH_TLS_OPENSSL
 #  define SSL_DATA_PENDING(A) ((A)->ssl && SSL_pending((A)->ssl))
+#elif defined(WITH_TLS_MBEDTLS)
+#  define SSL_DATA_PENDING(A) ((A)->mbedtls && mbedtls_ssl_get_bytes_avail(&(A)->mbedtls->ssl) > 0)
 #else
 #  define SSL_DATA_PENDING(A) 0
 #endif
 
-#ifdef WITH_TLS
+#ifdef WITH_TLS_OPENSSL
 
 #include <openssl/ssl.h>
 #include <openssl/engine.h>
@@ -34,6 +36,10 @@ Contributors:
 int mosquitto__server_certificate_verify(int preverify_ok, X509_STORE_CTX *ctx);
 int tls__set_verify_hostname(struct mosquitto *mosq, const char *hostname);
 
-#endif /* WITH_TLS */
+#elif defined(WITH_TLS_MBEDTLS)
+
+#include "tls_mbedtls.h"
+
+#endif
 
 #endif

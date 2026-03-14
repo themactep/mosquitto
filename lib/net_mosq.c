@@ -57,11 +57,14 @@ Contributors:
 #include <net/netbyte.h>
 #endif
 
-#ifdef WITH_TLS
+#ifdef WITH_TLS_OPENSSL
 #include <openssl/conf.h>
 #include <openssl/engine.h>
 #include <openssl/err.h>
 #include <openssl/ui.h>
+#endif
+
+#ifdef WITH_TLS
 #include <tls_mosq.h>
 #endif
 
@@ -80,7 +83,7 @@ Contributors:
 #include "packet_mosq.h"
 #include "util_mosq.h"
 
-#ifdef WITH_TLS
+#ifdef WITH_TLS_OPENSSL
 int tls_ex_index_mosq = -1;
 UI_METHOD *_ui_method = NULL;
 
@@ -910,7 +913,7 @@ static int net__init_ssl_ctx(struct mosquitto *mosq)
 
 int net__socket_connect_step3(struct mosquitto *mosq, const char *host)
 {
-#ifdef WITH_TLS
+#ifdef WITH_TLS_OPENSSL
 	BIO *bio;
 
 	int rc = net__init_ssl_ctx(mosq);
@@ -959,6 +962,18 @@ int net__socket_connect_step3(struct mosquitto *mosq, const char *host)
 			return MOSQ_ERR_TLS;
 		}
 
+	}
+#elif defined(WITH_TLS_MBEDTLS)
+	if(mosq->tls_cafile || mosq->tls_capath || mosq->tls_use_os_certs
+#ifdef FINAL_WITH_TLS_PSK
+			|| mosq->tls_psk
+#endif
+			){
+		int rc = mosquitto__mbedtls_connect(mosq, host);
+		if(rc){
+			net__socket_close(mosq);
+			return rc;
+		}
 	}
 #else
 	UNUSED(mosq);

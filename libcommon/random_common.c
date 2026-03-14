@@ -26,8 +26,7 @@ Contributors:
 #  include <lmcons.h>
 #endif
 
-#ifdef WITH_TLS
-#  include <openssl/bn.h>
+#ifdef WITH_TLS_OPENSSL
 #  include <openssl/rand.h>
 #elif defined(WITH_TLS_MBEDTLS)
 #  include <sys/random.h>
@@ -47,8 +46,12 @@ int mosquitto_getrandom(void *bytes, int count)
 {
 	int rc = MOSQ_ERR_UNKNOWN;
 
-#ifdef WITH_TLS
+#ifdef WITH_TLS_OPENSSL
 	if(RAND_bytes(bytes, count) == 1){
+		rc = MOSQ_ERR_SUCCESS;
+	}
+#elif defined(WITH_TLS_MBEDTLS)
+	if(getrandom(bytes, (size_t)count, 0) == count){
 		rc = MOSQ_ERR_SUCCESS;
 	}
 #elif defined(HAVE_GETRANDOM)

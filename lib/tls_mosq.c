@@ -18,7 +18,7 @@ Contributors:
 
 #include "config.h"
 
-#ifdef WITH_TLS
+#ifdef WITH_TLS_OPENSSL
 
 #ifdef WIN32
 #  include <winsock2.h>
