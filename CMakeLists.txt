@@ -64,6 +64,7 @@ if (WITH_TLS)
 		find_package(PkgConfig REQUIRED)
 		pkg_check_modules(MBEDTLS REQUIRED mbedtls)
 		add_definitions("-DWITH_TLS_MBEDTLS")
+		set(WITH_TLS_MBEDTLS_BROKER ON)
 		set(OPENSSL_INCLUDE_DIR "")
 		# Provide OpenSSL::SSL as an alias for mbedtls so that
 		# subdirectory CMakeLists.txt files linking OpenSSL::SSL
