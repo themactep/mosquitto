@@ -29,6 +29,8 @@ Contributors:
 #ifdef WITH_TLS
 #  include <openssl/bn.h>
 #  include <openssl/rand.h>
+#elif defined(WITH_TLS_MBEDTLS)
+#  include <sys/random.h>
 #elif defined(HAVE_GETRANDOM)  /* From CMakeLists.txt */
 # include <sys/random.h>
 #elif defined(__linux__) && defined(__GLIBC__) /* For legacy Makefiles */
