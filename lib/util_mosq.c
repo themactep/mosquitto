@@ -31,10 +31,6 @@ Contributors:
 #  include <sys/stat.h>
 #endif
 
-#ifdef WITH_TLS
-#  include <openssl/bn.h>
-#endif
-
 #ifdef WITH_BROKER
 #include "mosquitto_broker_internal.h"
 #else
@@ -147,20 +143,34 @@ uint16_t mosquitto__mid_generate(struct mosquitto *mosq)
 
 #ifdef WITH_TLS
 
+#define MOSQ_SHA1_BIN_LEN 20
+
+static int mosquitto__hex_char_to_int(char c)
+{
+	if(c >= '0' && c <= '9'){
+		return c - '0';
+	}else if(c >= 'a' && c <= 'f'){
+		return c - 'a' + 10;
+	}else if(c >= 'A' && c <= 'F'){
+		return c - 'A' + 10;
+	}
+	return -1;
+}
+
 
 int mosquitto__hex2bin_sha1(const char *hex, unsigned char **bin)
 {
-	unsigned char *sha, tmp[SHA_DIGEST_LENGTH];
+	unsigned char *sha, tmp[MOSQ_SHA1_BIN_LEN];
 
-	if(mosquitto__hex2bin(hex, tmp, SHA_DIGEST_LENGTH) != SHA_DIGEST_LENGTH){
+	if(mosquitto__hex2bin(hex, tmp, MOSQ_SHA1_BIN_LEN) != MOSQ_SHA1_BIN_LEN){
 		return MOSQ_ERR_INVAL;
 	}
 
-	sha = mosquitto_malloc(SHA_DIGEST_LENGTH);
+	sha = mosquitto_malloc(MOSQ_SHA1_BIN_LEN);
 	if(!sha){
 		return MOSQ_ERR_NOMEM;
 	}
-	memcpy(sha, tmp, SHA_DIGEST_LENGTH);
+	memcpy(sha, tmp, MOSQ_SHA1_BIN_LEN);
 	*bin = sha;
 	return MOSQ_ERR_SUCCESS;
 }
@@ -168,39 +178,35 @@ int mosquitto__hex2bin_sha1(const char *hex, unsigned char **bin)
 
 int mosquitto__hex2bin(const char *hex, unsigned char *bin, int bin_max_len)
 {
-	BIGNUM *bn = NULL;
-	int len;
-	int leading_zero = 0;
-	size_t i = 0;
+	size_t hex_len;
+	size_t i;
+	int hi;
+	int lo;
+	int out_len;
 
-	/* Count the number of leading zero */
-	for(i=0; i<strlen(hex); i=i+2){
-		if(strncmp(hex + i, "00", 2) == 0){
-			if(leading_zero >= bin_max_len){
-				return 0;
-			}
-			/* output leading zero to bin */
-			bin[leading_zero] = 0;
-			leading_zero++;
-		}else{
-			break;
-		}
-	}
-
-	if(BN_hex2bn(&bn, hex) == 0){
-		if(bn){
-			BN_free(bn);
-		}
-		return 0;
-	}
-	if(BN_num_bytes(bn) + leading_zero > bin_max_len){
-		BN_free(bn);
+	if(!hex || !bin || bin_max_len < 0){
 		return 0;
 	}
 
-	len = BN_bn2bin(bn, bin + leading_zero);
-	BN_free(bn);
-	return len + leading_zero;
+	hex_len = strlen(hex);
+	if(hex_len % 2 != 0){
+		return 0;
+	}
+	if((int)(hex_len / 2) > bin_max_len){
+		return 0;
+	}
+
+	out_len = 0;
+	for(i=0; i<hex_len; i += 2){
+		hi = mosquitto__hex_char_to_int(hex[i]);
+		lo = mosquitto__hex_char_to_int(hex[i+1]);
+		if(hi < 0 || lo < 0){
+			return 0;
+		}
+		bin[out_len++] = (unsigned char)((hi << 4) | lo);
+	}
+
+	return out_len;
 }
 #endif
 

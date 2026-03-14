@@ -26,10 +26,12 @@ Contributors:
 #  include <winsock2.h>
 #endif
 
-#ifdef WITH_TLS
+#include <time.h>
+
+#ifdef WITH_TLS_OPENSSL
 #  include <openssl/ssl.h>
-#else
-#  include <time.h>
+#elif defined(WITH_TLS_MBEDTLS)
+#  include "tls_mbedtls.h"
 #endif
 #include <stdlib.h>
 
@@ -342,10 +344,17 @@ struct mosquitto {
 	int64_t out_packet_bytes;
 	time_t will_delay_time;
 #ifdef WITH_TLS
+#ifdef WITH_TLS_OPENSSL
 	SSL *ssl;
 	SSL_CTX *ssl_ctx;
 #ifndef WITH_BROKER
 	SSL_CTX *user_ssl_ctx;
+#endif
+#elif defined(WITH_TLS_MBEDTLS)
+	struct mosq_mbedtls *mbedtls;
+#ifndef WITH_BROKER
+	struct mosq_mbedtls *user_mbedtls;
+#endif
 #endif
 	char *tls_cafile;
 	char *tls_capath;

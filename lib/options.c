@@ -534,7 +534,7 @@ int mosquitto_int_option(struct mosquitto *mosq, enum mosq_opt_t option, int val
 			break;
 
 		case MOSQ_OPT_SSL_CTX_WITH_DEFAULTS:
-#if defined(WITH_TLS)
+#if defined(WITH_TLS_OPENSSL)
 			if(value){
 				mosq->ssl_ctx_defaults = true;
 			}else{
@@ -610,7 +610,7 @@ int mosquitto_void_option(struct mosquitto *mosq, enum mosq_opt_t option, void *
 
 	switch(option){
 		case MOSQ_OPT_SSL_CTX:
-#ifdef WITH_TLS
+#ifdef WITH_TLS_OPENSSL
 			mosq->user_ssl_ctx = (SSL_CTX *)value;
 			if(mosq->user_ssl_ctx){
 				SSL_CTX_up_ref(mosq->user_ssl_ctx);
