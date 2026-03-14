@@ -29,6 +29,9 @@ For testing, the following packages are required:
 To compile you may either use CMake, or on Linux look in the file `config.mk`
 for compile options and use plain `make`.
 
+For a step-by-step CMake build using the mbedtls TLS backend, see
+`README-mbedtls.md`.
+
 Up to version 2.1, the recommendation was to use CMake for Windows and Mac, and
 to use make everywhere else. The recommendation now is to use cmake in all
 cases, and that the plain makefiles will be removed in version 3.0.
