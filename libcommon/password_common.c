@@ -21,7 +21,7 @@ Contributors:
 #include <stdbool.h>
 #include <string.h>
 
-#ifdef WITH_TLS
+#ifdef WITH_TLS_OPENSSL
 #  include <openssl/opensslv.h>
 #  include <openssl/evp.h>
 #  include <openssl/rand.h>
@@ -30,7 +30,7 @@ Contributors:
 
 #include "mosquitto.h"
 
-#ifdef WITH_TLS
+#ifdef WITH_TLS_OPENSSL
 #  define HASH_LEN EVP_MAX_MD_SIZE
 #else
 /* 64 bytes big enough for SHA512 */
@@ -75,7 +75,7 @@ struct mosquitto_pw {
 
 static int pw__memcmp_const(const void *a, const void *b, size_t len)
 {
-#ifdef WITH_TLS
+#ifdef WITH_TLS_OPENSSL
 	return CRYPTO_memcmp(a, b, len);
 #else
 	int rc = 0;
@@ -179,7 +179,7 @@ static int pw__decode_argon2id(struct mosquitto_pw *pw, const char *password)
 /* ==================================================
  * SHA512 PBKDF2
  * ================================================== */
-#ifdef WITH_TLS
+#ifdef WITH_TLS_OPENSSL
 
 
 static int pw__hash_sha512_pbkdf2(const char *password, struct mosquitto_pw *pw, unsigned char *password_hash, unsigned int hash_len, int iterations)
@@ -202,7 +202,7 @@ static int pw__hash_sha512_pbkdf2(const char *password, struct mosquitto_pw *pw,
 
 static int pw__create_sha512_pbkdf2(struct mosquitto_pw *pw, const char *password)
 {
-#ifdef WITH_TLS
+#ifdef WITH_TLS_OPENSSL
 	pw->hashtype = MOSQ_PW_SHA512_PBKDF2;
 	pw->params.sha512_pbkdf2.salt_len = HASH_LEN;
 	int rc = RAND_bytes(pw->params.sha512_pbkdf2.salt, (int)pw->params.sha512_pbkdf2.salt_len);
@@ -228,7 +228,7 @@ static int pw__create_sha512_pbkdf2(struct mosquitto_pw *pw, const char *passwor
 
 static int pw__verify_sha512_pbkdf2(struct mosquitto_pw *pw, const char *password)
 {
-#ifdef WITH_TLS
+#ifdef WITH_TLS_OPENSSL
 	int rc;
 	unsigned char password_hash[HASH_LEN];
 
@@ -253,7 +253,7 @@ static int pw__verify_sha512_pbkdf2(struct mosquitto_pw *pw, const char *passwor
 
 static int pw__encode_sha512_pbkdf2(struct mosquitto_pw *pw)
 {
-#ifdef WITH_TLS
+#ifdef WITH_TLS_OPENSSL
 	int rc;
 	char *salt64 = NULL, *hash64 = NULL;
 
@@ -289,7 +289,7 @@ static int pw__encode_sha512_pbkdf2(struct mosquitto_pw *pw)
 
 static int pw__decode_sha512_pbkdf2(struct mosquitto_pw *pw, const char *salt_password)
 {
-#ifdef WITH_TLS
+#ifdef WITH_TLS_OPENSSL
 	char *sp_heap, *saveptr = NULL;
 	char *iterations_s;
 	char *salt_b64, *password_b64;
@@ -356,7 +356,7 @@ static int pw__decode_sha512_pbkdf2(struct mosquitto_pw *pw, const char *salt_pa
 /* ==================================================
  * SHA512
  * ================================================== */
-#ifdef WITH_TLS
+#ifdef WITH_TLS_OPENSSL
 
 
 static int pw__hash_sha512(const char *password, struct mosquitto_pw *pw, unsigned char *password_hash, unsigned int hash_len)
@@ -396,7 +396,7 @@ static int pw__hash_sha512(const char *password, struct mosquitto_pw *pw, unsign
 
 static int pw__create_sha512(struct mosquitto_pw *pw, const char *password)
 {
-#ifdef WITH_TLS
+#ifdef WITH_TLS_OPENSSL
 	pw->hashtype = MOSQ_PW_SHA512;
 	pw->params.sha512.salt_len = HASH_LEN;
 	int rc = RAND_bytes(pw->params.sha512.salt, (int)pw->params.sha512.salt_len);
@@ -415,7 +415,7 @@ static int pw__create_sha512(struct mosquitto_pw *pw, const char *password)
 
 static int pw__verify_sha512(struct mosquitto_pw *pw, const char *password)
 {
-#ifdef WITH_TLS
+#ifdef WITH_TLS_OPENSSL
 	int rc;
 	unsigned char password_hash[HASH_LEN];
 
@@ -437,7 +437,7 @@ static int pw__verify_sha512(struct mosquitto_pw *pw, const char *password)
 
 static int pw__encode_sha512(struct mosquitto_pw *pw)
 {
-#ifdef WITH_TLS
+#ifdef WITH_TLS_OPENSSL
 	int rc;
 	char *salt64 = NULL, *hash64 = NULL;
 
@@ -472,7 +472,7 @@ static int pw__encode_sha512(struct mosquitto_pw *pw)
 
 static int pw__decode_sha512(struct mosquitto_pw *pw, const char *salt_password)
 {
-#ifdef WITH_TLS
+#ifdef WITH_TLS_OPENSSL
 	char *sp_heap, *saveptr = NULL;
 	char *salt_b64, *password_b64;
 	unsigned char *salt, *password;
