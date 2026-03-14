@@ -118,8 +118,10 @@ struct mosquitto *context__init(void)
 	context->msgs_out.inflight_maximum = db.config->max_inflight_messages;
 	context->msgs_out.inflight_quota = db.config->max_inflight_messages;
 	context->max_qos = 2;
-#ifdef WITH_TLS
+#ifdef WITH_TLS_OPENSSL
 	context->ssl = NULL;
+#elif defined(WITH_TLS_MBEDTLS)
+	context->mbedtls = NULL;
 #endif
 
 	return context;

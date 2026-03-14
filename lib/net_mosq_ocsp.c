@@ -44,7 +44,7 @@ in this Software without prior written authorization of the copyright holder.
 
 #include "config.h"
 
-#ifdef WITH_TLS
+#ifdef WITH_TLS_OPENSSL
 #include <logging_mosq.h>
 #include <mosquitto_internal.h>
 #include <net_mosq.h>

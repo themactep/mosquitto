@@ -26,8 +26,12 @@ Contributors:
 #include "utlist.h"
 #include "will_mosq.h"
 
-#ifdef WITH_TLS
+#ifdef WITH_TLS_OPENSSL
 #  include <openssl/ssl.h>
+#elif defined(WITH_TLS_MBEDTLS)
+#  include <mbedtls/ssl.h>
+#  include <mbedtls/x509_crt.h>
+#  include "tls_mbedtls.h"
 #endif
 
 
