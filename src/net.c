@@ -62,12 +62,13 @@ Contributors:
 #include "net_mosq.h"
 #include "util_mosq.h"
 
-#ifdef WITH_TLS
+#ifdef WITH_TLS_OPENSSL
 #  include "tls_mosq.h"
 #  include <openssl/err.h>
 static int tls_ex_index_context = -1;
 static int tls_ex_index_listener = -1;
 #endif
+#include "net_mbedtls_broker.h"
 
 #include "sys_tree.h"
 
@@ -79,7 +80,7 @@ void net__broker_init(void)
 {
 	spare_sock = socket(AF_INET, SOCK_STREAM, 0);
 	net__init();
-#ifdef WITH_TLS
+#ifdef WITH_TLS_OPENSSL
 	net__init_tls();
 #endif
 }
@@ -116,7 +117,7 @@ struct mosquitto *net__socket_accept(struct mosquitto__listener_sock *listensock
 {
 	mosq_sock_t new_sock = INVALID_SOCKET;
 	struct mosquitto *new_context;
-#ifdef WITH_TLS
+#ifdef WITH_TLS_OPENSSL
 	BIO *bio;
 #endif
 #ifdef WITH_WRAP
@@ -242,7 +243,7 @@ struct mosquitto *net__socket_accept(struct mosquitto__listener_sock *listensock
 		return NULL;
 	}
 
-#ifdef WITH_TLS
+#ifdef WITH_TLS_OPENSSL
 	/* TLS init */
 	if(new_context->listener->ssl_ctx){
 		new_context->ssl = SSL_new(new_context->listener->ssl_ctx);
@@ -261,6 +262,13 @@ struct mosquitto *net__socket_accept(struct mosquitto__listener_sock *listensock
 		ERR_clear_error();
 		SSL_set_accept_state(new_context->ssl);
 	}
+#elif defined(WITH_TLS_MBEDTLS)
+	if(LISTENER_HAS_TLS(new_context->listener)){
+		if(net__broker_tls_accept(new_context)){
+			context__cleanup(new_context, true);
+			return NULL;
+		}
+	}
 #endif
 
 	if(db.config->connection_messages == true
@@ -276,7 +284,7 @@ struct mosquitto *net__socket_accept(struct mosquitto__listener_sock *listensock
 	return new_context;
 }
 
-#ifdef WITH_TLS
+#ifdef WITH_TLS_OPENSSL
 
 
 static int client_certificate_verify(int preverify_ok, X509_STORE_CTX *ctx)
@@ -363,7 +371,7 @@ static unsigned int psk_server_callback(SSL *ssl, const char *identity, unsigned
 }
 #endif
 
-#ifdef WITH_TLS
+#ifdef WITH_TLS_OPENSSL
 
 
 static void tls_keylog_callback(const SSL *ssl, const char *line)
@@ -517,7 +525,7 @@ int net__tls_server_ctx(struct mosquitto__listener *listener)
 #endif
 
 
-#ifdef WITH_TLS
+#ifdef WITH_TLS_OPENSSL
 
 
 static int net__load_crl_file(struct mosquitto__listener *listener)
@@ -549,7 +557,7 @@ static int net__load_crl_file(struct mosquitto__listener *listener)
 
 int net__load_certificates(struct mosquitto__listener *listener)
 {
-#ifdef WITH_TLS
+#ifdef WITH_TLS_OPENSSL
 	int rc;
 
 	if(listener->require_certificate){
@@ -591,7 +599,7 @@ int net__load_certificates(struct mosquitto__listener *listener)
 }
 
 
-#if defined(WITH_TLS) && !defined(OPENSSL_NO_ENGINE) && OPENSSL_API_LEVEL < 30000
+#if defined(WITH_TLS_OPENSSL) && !defined(OPENSSL_NO_ENGINE) && OPENSSL_API_LEVEL < 30000
 
 
 static int net__load_engine(struct mosquitto__listener *listener)
@@ -653,7 +661,7 @@ static int net__load_engine(struct mosquitto__listener *listener)
 
 int net__tls_load_verify(struct mosquitto__listener *listener)
 {
-#ifdef WITH_TLS
+#ifdef WITH_TLS_OPENSSL
 	int rc;
 
 #  if OPENSSL_VERSION_NUMBER < 0x30000000L
@@ -1016,7 +1024,16 @@ int net__socket_listen(struct mosquitto__listener *listener)
 
 	/* We need to have at least one working socket. */
 	if(listener->sock_count > 0){
-#ifdef WITH_TLS
+#ifdef WITH_TLS_MBEDTLS
+		if(listener->certfile && listener->keyfile){
+			if(net__broker_tls_server_ctx(listener)){
+				return 1;
+			}
+			if(net__broker_tls_load_verify(listener)){
+				return 1;
+			}
+		}
+#elif defined(WITH_TLS_OPENSSL)
 		if(listener->certfile && listener->keyfile){
 			if(net__tls_server_ctx(listener)){
 				return 1;
@@ -1026,7 +1043,7 @@ int net__socket_listen(struct mosquitto__listener *listener)
 				return 1;
 			}
 		}
-#  ifdef FINAL_WITH_TLS_PSK
+#	ifdef FINAL_WITH_TLS_PSK
 		if(listener->psk_hint){
 			if(listener->certfile == NULL || listener->keyfile == NULL){
 				if(net__tls_server_ctx(listener)){
@@ -1043,14 +1060,14 @@ int net__socket_listen(struct mosquitto__listener *listener)
 				}
 			}
 		}
-#  endif /* FINAL_WITH_TLS_PSK */
+#	endif /* FINAL_WITH_TLS_PSK */
 		if(tls_ex_index_context == -1){
 			tls_ex_index_context = SSL_get_ex_new_index(0, "client context", NULL, NULL, NULL);
 		}
 		if(tls_ex_index_listener == -1){
 			tls_ex_index_listener = SSL_get_ex_new_index(0, "listener", NULL, NULL, NULL);
 		}
-#endif /* WITH_TLS */
+#endif /* WITH_TLS_OPENSSL */
 		return 0;
 	}else{
 		return 1;

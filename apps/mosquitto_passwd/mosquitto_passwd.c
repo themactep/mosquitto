@@ -20,8 +20,12 @@ Contributors:
 
 #include <ctype.h>
 #include <errno.h>
-#include <openssl/evp.h>
-#include <openssl/rand.h>
+#ifdef WITH_TLS_OPENSSL
+#  include <openssl/evp.h>
+#  include <openssl/rand.h>
+#elif defined(WITH_TLS_MBEDTLS)
+#  include <sys/random.h>
+#endif
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
