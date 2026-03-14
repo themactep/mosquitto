@@ -62,7 +62,7 @@ if (WITH_TLS)
 
 	if (WITH_TLS_BACKEND STREQUAL "mbedtls")
 		find_package(PkgConfig REQUIRED)
-		pkg_check_modules(MBEDTLS REQUIRED mbedtls)
+		pkg_check_modules(MBEDTLS REQUIRED mbedtls mbedx509 mbedcrypto)
 		add_definitions("-DWITH_TLS_MBEDTLS")
 		set(WITH_TLS_MBEDTLS_BROKER ON)
 		set(OPENSSL_INCLUDE_DIR "")

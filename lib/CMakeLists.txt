@@ -54,6 +54,7 @@ set(LIBRARIES common-options libmosquitto_common)
 
 if(WITH_TLS)
 	if(WITH_TLS_BACKEND STREQUAL "mbedtls")
+		list(APPEND C_SRC tls_mbedtls.c tls_mbedtls.h)
 		if(MBEDTLS_LIBRARIES)
 			set(LIBRARIES ${LIBRARIES} ${MBEDTLS_LIBRARIES})
 		else()
