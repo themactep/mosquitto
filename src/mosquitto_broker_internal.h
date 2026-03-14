@@ -44,6 +44,7 @@ Contributors:
 #include "mosquitto.h"
 #include "logging_mosq.h"
 #include "tls_mosq.h"
+#include "net_mbedtls_broker.h"
 #include "uthash.h"
 #include "acl_file.h"
 #include "password_file.h"
@@ -252,7 +253,11 @@ struct mosquitto__listener {
 	char *ciphers;
 	char *ciphers_tls13;
 	char *psk_hint;
+#	ifdef WITH_TLS_MBEDTLS
+	struct mosq_broker_tls *tls_cfg;
+#	elif defined(WITH_TLS_OPENSSL)
 	SSL_CTX *ssl_ctx;
+#	endif
 	char *crlfile;
 	char *tls_version;
 	bool use_identity_as_username;
