@@ -288,10 +288,14 @@ static void loop_handle_reads_writes(void)
 		}
 #endif
 
-#ifdef WITH_TLS
+#ifdef WITH_TLS_OPENSSL
 		if(pollfds[context->pollfd_index].revents & POLLOUT ||
 				context->want_write ||
 				(context->ssl && context->state == mosq_cs_new)){
+#elif defined(WITH_TLS_MBEDTLS)
+		if(pollfds[context->pollfd_index].revents & POLLOUT ||
+				context->want_write ||
+				(context->mbedtls && context->state == mosq_cs_new)){
 #else
 		if(pollfds[context->pollfd_index].revents & POLLOUT){
 #endif
@@ -331,9 +335,12 @@ static void loop_handle_reads_writes(void)
 		}
 #endif
 
-#ifdef WITH_TLS
+#ifdef WITH_TLS_OPENSSL
 		if(pollfds[context->pollfd_index].revents & POLLIN ||
 				(context->ssl && context->state == mosq_cs_new)){
+#elif defined(WITH_TLS_MBEDTLS)
+		if(pollfds[context->pollfd_index].revents & POLLIN ||
+				(context->mbedtls && context->state == mosq_cs_new)){
 #else
 		if(pollfds[context->pollfd_index].revents & POLLIN){
 #endif

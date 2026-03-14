@@ -102,7 +102,11 @@ static struct mosquitto *bridge__new(struct mosquitto__bridge *bridge)
 	new_context->tls_capath = bridge->tls_capath;
 	new_context->tls_certfile = bridge->tls_certfile;
 	new_context->tls_keyfile = bridge->tls_keyfile;
+#	ifdef WITH_TLS_OPENSSL
 	new_context->tls_cert_reqs = SSL_VERIFY_PEER;
+#	elif defined(WITH_TLS_MBEDTLS)
+	new_context->tls_cert_reqs = 1;
+#	endif
 	new_context->tls_ocsp_required = bridge->tls_ocsp_required;
 	new_context->tls_version = bridge->tls_version;
 	new_context->tls_insecure = bridge->tls_insecure;
@@ -882,7 +886,7 @@ void bridge__cleanup(struct mosquitto *context)
 		mosquitto_FREE(context->bridge->remote_password);
 	}
 	context->bridge->remote_password = NULL;
-#ifdef WITH_TLS
+#ifdef WITH_TLS_OPENSSL
 	if(context->ssl_ctx){
 		SSL_CTX_free(context->ssl_ctx);
 		context->ssl_ctx = NULL;

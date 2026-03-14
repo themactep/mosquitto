@@ -232,9 +232,12 @@ static void loop_handle_reads_writes(struct mosquitto *context, uint32_t events)
 #endif
 
 	if(events & EPOLLOUT
-#ifdef WITH_TLS
+#ifdef WITH_TLS_OPENSSL
 			|| context->want_write
 			|| (context->ssl && context->state == mosq_cs_new)
+#elif defined(WITH_TLS_MBEDTLS)
+			|| context->want_write
+			|| (context->mbedtls && context->state == mosq_cs_new)
 #endif
 			){
 
@@ -262,8 +265,10 @@ static void loop_handle_reads_writes(struct mosquitto *context, uint32_t events)
 	}
 
 	if(events & EPOLLIN
-#ifdef WITH_TLS
+#ifdef WITH_TLS_OPENSSL
 			|| (context->ssl && context->state == mosq_cs_new)
+#elif defined(WITH_TLS_MBEDTLS)
+			|| (context->mbedtls && context->state == mosq_cs_new)
 #endif
 			){
 

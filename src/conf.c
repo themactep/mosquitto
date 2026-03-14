@@ -43,6 +43,7 @@ Contributors:
 #endif
 
 #include "mosquitto_broker_internal.h"
+#include "net_mbedtls_broker.h"
 #include "tls_mosq.h"
 #include "util_mosq.h"
 #include "mosquitto/mqtt_protocol.h"
@@ -435,13 +436,17 @@ void config__cleanup(struct mosquitto__config *config)
 			mosquitto_FREE(config->listeners[i].tls_version);
 			mosquitto_FREE(config->listeners[i].tls_engine);
 			mosquitto_FREE(config->listeners[i].tls_engine_kpass_sha1);
-#if defined(WITH_WEBSOCKETS) && WITH_WEBSOCKETS == WS_IS_LWS
+#ifdef WITH_TLS_OPENSSL
+#	if defined(WITH_WEBSOCKETS) && WITH_WEBSOCKETS == WS_IS_LWS
 			if(!config->listeners[i].ws_context) /* libwebsockets frees its own SSL_CTX */
-#endif
+#	endif
 			{
 				SSL_CTX_free(config->listeners[i].ssl_ctx);
 				config->listeners[i].ssl_ctx = NULL;
 			}
+#elif defined(WITH_TLS_MBEDTLS)
+			net__broker_tls_cleanup(&config->listeners[i]);
+#endif
 #endif
 #if defined(WITH_WEBSOCKETS) || defined(WITH_HTTP_API)
 			mosquitto_FREE(config->listeners[i].http_dir);

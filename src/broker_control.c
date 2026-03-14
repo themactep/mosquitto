@@ -29,6 +29,8 @@ Contributors:
 #include "json_help.h"
 #include "mosquitto.h"
 #include "mosquitto_broker_internal.h"
+#include "net_mbedtls_broker.h"
+#include "net_mbedtls_broker.h"
 #include "mosquitto/broker.h"
 #include "mosquitto/broker_control.h"
 #include "mosquitto/broker_plugin.h"

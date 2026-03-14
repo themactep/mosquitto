@@ -222,13 +222,20 @@ int mosquitto_reinitialise(struct mosquitto *mosq, const char *id, bool clean_st
 	mosq->reconnect_delay_max = 1;
 	mosq->reconnect_exponential_backoff = false;
 	mosq->threaded = mosq_ts_none;
-#ifdef WITH_TLS
+#ifdef WITH_TLS_OPENSSL
 	mosq->ssl = NULL;
 	mosq->ssl_ctx = NULL;
 	mosq->ssl_ctx_defaults = true;
-#ifndef WITH_BROKER
+#	ifndef WITH_BROKER
 	mosq->user_ssl_ctx = NULL;
+#	endif
+#elif defined(WITH_TLS_MBEDTLS)
+	mosq->mbedtls = NULL;
+#	ifndef WITH_BROKER
+	mosq->user_mbedtls = NULL;
+#	endif
 #endif
+#ifdef WITH_TLS
 	mosq->tls_cert_reqs = SSL_VERIFY_PEER;
 	mosq->tls_insecure = false;
 	mosq->want_write = false;
@@ -276,20 +283,21 @@ void mosquitto__destroy(struct mosquitto *mosq)
 	}
 	message__cleanup_all(mosq);
 	will__clear(mosq);
-#ifdef WITH_TLS
+#ifdef WITH_TLS_OPENSSL
 	if(mosq->ssl){
 		SSL_free(mosq->ssl);
 	}
-#ifndef WITH_BROKER
+#	ifndef WITH_BROKER
 	if(mosq->user_ssl_ctx){
 		SSL_CTX_free(mosq->user_ssl_ctx);
 	}else if(mosq->ssl_ctx){
 		SSL_CTX_free(mosq->ssl_ctx);
 	}
-#else
+#	else
 	if(mosq->ssl_ctx){
 		SSL_CTX_free(mosq->ssl_ctx);
 	}
+#	endif
 #endif
 	mosquitto_FREE(mosq->tls_cafile);
 	mosquitto_FREE(mosq->tls_capath);

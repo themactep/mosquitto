@@ -19,6 +19,8 @@ Contributors:
 #include "config.h"
 #include "net_mosq.h"
 #include "mosquitto_broker_internal.h"
+#include "net_mbedtls_broker.h"
+#include "net_mbedtls_broker.h"
 
 static int listensock_index = 0;
 extern int g_run;

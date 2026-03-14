@@ -23,6 +23,7 @@ Contributors:
 #include <utlist.h>
 
 #include "mosquitto_broker_internal.h"
+#include "net_mbedtls_broker.h"
 #include "mosquitto/mqtt_protocol.h"
 #include "packet_mosq.h"
 #include "property_mosq.h"
@@ -229,7 +230,7 @@ int connect__on_authorised(struct mosquitto *context, void *auth_data_out, uint1
 			log__printf(NULL, MOSQ_LOG_DEBUG, "No will message specified.");
 		}
 	}
-#ifdef WITH_TLS
+#ifdef WITH_TLS_OPENSSL
 	if(context->ssl){
 		log__printf(NULL, MOSQ_LOG_NOTICE, "Client %s negotiated %s cipher %s",
 				context->id,
@@ -846,7 +847,7 @@ static int check_additional_trailing_data(struct mosquitto *context, uint8_t pro
 	return MOSQ_ERR_SUCCESS;
 }
 
-#ifdef WITH_TLS
+#ifdef WITH_TLS_OPENSSL
 
 
 inline static int get_client_cert_and_subject_name(struct mosquitto *context, X509 **client_cert, X509_NAME **name)
@@ -976,12 +977,12 @@ static int handle_username_from_cert_options(struct mosquitto *context, char **u
 	int rc;
 
 #ifdef WITH_TLS
-	if(context->listener->ssl_ctx && (context->listener->use_identity_as_username || context->listener->use_subject_as_username)){
+	if(LISTENER_HAS_TLS(context->listener) && (context->listener->use_identity_as_username || context->listener->use_subject_as_username)){
 		/* Don't need the username or password if provided */
 		mosquitto_FREE(*username);
 		mosquitto_FREE(*password);
 
-		if(!context->ssl){
+		if(!CONTEXT_HAS_TLS(context)){
 			return send__connack_bad_username_or_password_error(context, MOSQ_ERR_AUTH);
 		}
 #ifdef FINAL_WITH_TLS_PSK
@@ -1082,7 +1083,7 @@ int handle__connect(struct mosquitto *context)
 	}
 
 #ifdef WITH_TLS
-	if(context->in_packet.command == 0x16 && context->listener->ssl_ctx == NULL){ /* 0x16 is TLS handshake client hello */
+	if(context->in_packet.command == 0x16 && !LISTENER_HAS_TLS(context->listener)){ /* 0x16 is TLS handshake client hello */
 		log__printf(NULL, MOSQ_LOG_NOTICE, "Client from %s:%d appears to be using TLS to connect to a non-TLS listener.",
 				context->address, context->remote_port);
 		rc = MOSQ_ERR_PROTOCOL;
@@ -1248,7 +1249,7 @@ int handle__connect(struct mosquitto *context)
 		}
 	}else{
 #ifdef WITH_TLS
-		if(context->listener->ssl_ctx && (context->listener->use_identity_as_username || context->listener->use_subject_as_username)){
+		if(LISTENER_HAS_TLS(context->listener) && (context->listener->use_identity_as_username || context->listener->use_subject_as_username)){
 			/* Authentication assumed to be cleared */
 		}else
 #endif

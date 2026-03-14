@@ -150,7 +150,7 @@ static int callback_mqtt(
 					return -1;
 				}
 				mosq->wsi = wsi;
-#ifdef WITH_TLS
+#ifdef WITH_TLS_OPENSSL
 				if(in){
 					mosq->ssl = (SSL *)in;
 					if(!mosq->listener->ssl_ctx){
@@ -200,7 +200,7 @@ static int callback_mqtt(
 					mux__delete(mosq);
 				}
 				mosq->wsi = NULL;
-#ifdef WITH_TLS
+#ifdef WITH_TLS_OPENSSL
 				mosq->ssl = NULL;
 #endif
 				do_disconnect(mosq, MOSQ_ERR_CONN_LOST);
@@ -644,7 +644,7 @@ static int callback_http(
 			}
 			break;
 
-#ifdef WITH_TLS
+#ifdef WITH_TLS_OPENSSL
 		case LWS_CALLBACK_OPENSSL_PERFORM_CLIENT_CERT_VERIFICATION:
 			if(!len || (SSL_get_verify_result((SSL *)in) != X509_V_OK)){
 				return 1;
@@ -701,7 +701,7 @@ void mosq_websockets_init(struct mosquitto__listener *listener, const struct mos
 	info.protocols = p;
 	info.gid = -1;
 	info.uid = -1;
-#ifdef WITH_TLS
+#ifdef WITH_TLS_OPENSSL
 	if(listener->cafile){
 		info.ssl_ca_filepath = listener->cafile;
 	}else if(listener->capath){

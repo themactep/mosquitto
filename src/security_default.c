@@ -23,6 +23,8 @@ Contributors:
 #include <string.h>
 
 #include "mosquitto_broker_internal.h"
+#include "net_mbedtls_broker.h"
+#include "net_mbedtls_broker.h"
 #include "mosquitto/mqtt_protocol.h"
 #include "password_file.h"
 #include "send_mosq.h"
@@ -105,7 +107,7 @@ int mosquitto_security_cleanup_default(void)
 }
 
 
-#ifdef WITH_TLS
+#ifdef WITH_TLS_OPENSSL
 
 
 static void security__disconnect_auth(struct mosquitto *context)
@@ -129,7 +131,7 @@ int mosquitto_security_apply_default(void)
 {
 	struct mosquitto *context, *ctxt_tmp = NULL;
 	bool allow_anonymous;
-#ifdef WITH_TLS
+#ifdef WITH_TLS_OPENSSL
 	X509_NAME *name;
 	X509_NAME_ENTRY *name_entry;
 	ASN1_STRING *name_asn1 = NULL;
@@ -140,7 +142,7 @@ int mosquitto_security_apply_default(void)
 	char *subject;
 #endif
 
-#ifdef WITH_TLS
+#ifdef WITH_TLS_OPENSSL
 	for(int i=0; i<db.config->listener_count; i++){
 		listener = &db.config->listeners[i];
 		if(listener && listener->ssl_ctx && listener->certfile && listener->keyfile && listener->crlfile && listener->require_certificate){
@@ -150,6 +152,21 @@ int mosquitto_security_apply_default(void)
 
 			if(net__tls_load_verify(listener)){
 				return MOSQ_ERR_TLS;
+			}
+		}
+	}
+#elif defined(WITH_TLS_MBEDTLS)
+	{
+		struct mosquitto__listener *listener;
+		for(int i=0; i<db.config->listener_count; i++){
+			listener = &db.config->listeners[i];
+			if(listener && LISTENER_HAS_TLS(listener) && listener->certfile && listener->keyfile && listener->crlfile && listener->require_certificate){
+				if(net__broker_tls_server_ctx(listener)){
+					return MOSQ_ERR_TLS;
+				}
+				if(net__broker_tls_load_verify(listener)){
+					return MOSQ_ERR_TLS;
+				}
 			}
 		}
 	}
@@ -175,10 +192,10 @@ int mosquitto_security_apply_default(void)
 		}
 
 		/* Check for connected clients that are no longer authorised */
-#ifdef WITH_TLS
-		if(context->listener && context->listener->ssl_ctx && (context->listener->use_identity_as_username || context->listener->use_subject_as_username)){
+#ifdef WITH_TLS_OPENSSL
+		if(context->listener && LISTENER_HAS_TLS(context->listener) && (context->listener->use_identity_as_username || context->listener->use_subject_as_username)){
 			/* Client must have either a valid certificate, or valid PSK used as a username. */
-			if(!context->ssl){
+			if(!CONTEXT_HAS_TLS(context)){
 				if(context->protocol == mosq_p_mqtt5){
 					send__disconnect(context, MQTT_RC_ADMINISTRATIVE_ACTION, NULL);
 				}
