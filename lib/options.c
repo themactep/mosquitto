@@ -364,7 +364,7 @@ int mosquitto_string_option(struct mosquitto *mosq, enum mosq_opt_t option, cons
 
 
 		case MOSQ_OPT_TLS_ENGINE_KPASS_SHA1:
-#if defined(WITH_TLS) && !defined(OPENSSL_NO_ENGINE) && OPENSSL_API_LEVEL < 30000
+#if defined(WITH_TLS_OPENSSL) && !defined(OPENSSL_NO_ENGINE) && OPENSSL_API_LEVEL < 30000
 			mosquitto_FREE(mosq->tls_engine_kpass_sha1);
 			if(mosquitto__hex2bin_sha1(value, (unsigned char **)&str) != MOSQ_ERR_SUCCESS){
 				return MOSQ_ERR_INVAL;
