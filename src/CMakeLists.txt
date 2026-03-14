@@ -35,6 +35,7 @@ add_executable(mosquitto
 	../include/mosquitto_broker.h mosquitto_broker_internal.h
 	mux.c mux.h mux_epoll.c mux_kqueue.c mux_poll.c
 	net.c
+	$<$<BOOL:${WITH_TLS_MBEDTLS_BROKER}>:net_mbedtls_broker.c>
 	../lib/net_mosq_ocsp.c ../lib/net_mosq.c ../lib/net_mosq.h
 	../lib/net_ws.c
 	../lib/packet_datatypes.c
@@ -178,7 +179,11 @@ endif()
 target_compile_definitions(mosquitto PRIVATE "WITH_BROKER")
 
 if(WITH_TLS)
-	target_link_libraries(mosquitto PRIVATE OpenSSL::SSL)
+	if(WITH_TLS_BACKEND STREQUAL "mbedtls")
+		target_link_libraries(mosquitto PRIVATE ${MBEDTLS_LIBRARIES})
+	else()
+		target_link_libraries(mosquitto PRIVATE OpenSSL::SSL)
+	endif()
 endif()
 
 # Check for getaddrinfo_a
