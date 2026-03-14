@@ -28,3 +28,16 @@ and may be unsuitable on e.g. a Raspberry Pi.
 ## Dependencies
 
 The tests require Python 3 and CUnit to be installed.
+
+## Host mbed TLS public broker smoke test
+
+To build Mosquitto for the host architecture with the mbed TLS backend and run
+a simple TLS publish/subscribe smoke test against `test.mosquitto.org`, use:
+
+```
+./test/client/test-mbedtls-public.sh
+```
+
+The script downloads the public test CA certificate from test.mosquitto.org,
+uses the compiled `mosquitto_pub`/`mosquitto_sub` binaries, and verifies a
+retained message round-trip on port 8883.
