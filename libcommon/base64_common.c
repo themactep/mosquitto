@@ -18,16 +18,18 @@ Contributors:
 
 #include "config.h"
 
-#ifdef WITH_TLS
+#ifdef WITH_TLS_OPENSSL
 #  include <openssl/opensslv.h>
 #  include <openssl/evp.h>
 #  include <openssl/buffer.h>
+#elif defined(WITH_TLS_MBEDTLS)
+#  include <mbedtls/base64.h>
 #endif
 #include <string.h>
 
 #include "mosquitto.h"
 
-#ifdef WITH_TLS
+#ifdef WITH_TLS_OPENSSL
 
 
 int mosquitto_base64_encode(const unsigned char *in, size_t in_len, char **encoded)
@@ -103,5 +105,34 @@ int mosquitto_base64_decode(const char *in, unsigned char **decoded, unsigned in
 	BIO_free_all(b64);
 
 	return rc;
+}
+#elif defined(WITH_TLS_MBEDTLS)
+
+int mosquitto_base64_encode(const unsigned char *in, size_t in_len, char **encoded)
+{
+	size_t olen = 0;
+	mbedtls_base64_encode(NULL, 0, &olen, in, in_len);
+	*encoded = mosquitto_malloc(olen + 1);
+	if(!(*encoded)) return 1;
+	if(mbedtls_base64_encode((unsigned char *)*encoded, olen, &olen, in, in_len) != 0){
+		mosquitto_free(*encoded); *encoded = NULL; return 1;
+	}
+	(*encoded)[olen] = '\0';
+	return 0;
+}
+
+int mosquitto_base64_decode(const char *in, unsigned char **decoded, unsigned int *decoded_len)
+{
+	size_t slen = strlen(in);
+	size_t olen = 0;
+	mbedtls_base64_decode(NULL, 0, &olen, (const unsigned char *)in, slen);
+	if(olen == 0){ *decoded = NULL; *decoded_len = 0; return 1; }
+	*decoded = mosquitto_calloc(olen, 1);
+	if(!(*decoded)) return 1;
+	if(mbedtls_base64_decode(*decoded, olen, &olen, (const unsigned char *)in, slen) != 0){
+		mosquitto_free(*decoded); *decoded = NULL; *decoded_len = 0; return 1;
+	}
+	*decoded_len = (unsigned int)olen;
+	return 0;
 }
 #endif
