@@ -400,12 +400,12 @@ errno = 0;
 ret = mbedtls_ssl_read(&mosq->mbedtls->ssl, buf, count);
 if(ret > 0) return ret;
 if(ret == MBEDTLS_ERR_SSL_WANT_READ || ret == MBEDTLS_ERR_SSL_WANT_WRITE){
-o = EAGAIN;
- -1;
+errno = EAGAIN;
+return -1;
 }
 if(ret == MBEDTLS_ERR_SSL_PEER_CLOSE_NOTIFY){
-o = ECONNRESET;
- -1;
+errno = ECONNRESET;
+return -1;
 }
 mosquitto__mbedtls_log_error(mosq, ret);
 errno = EPROTO;
@@ -422,9 +422,9 @@ errno = 0;
 ret = mbedtls_ssl_write(&mosq->mbedtls->ssl, buf, count);
 if(ret >= 0) return ret;
 if(ret == MBEDTLS_ERR_SSL_WANT_READ || ret == MBEDTLS_ERR_SSL_WANT_WRITE){
-t_write = (ret == MBEDTLS_ERR_SSL_WANT_WRITE);
-o = EAGAIN;
- -1;
+mosq->want_write = (ret == MBEDTLS_ERR_SSL_WANT_WRITE);
+errno = EAGAIN;
+return -1;
 }
 mosquitto__mbedtls_log_error(mosq, ret);
 errno = EPROTO;
