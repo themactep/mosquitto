@@ -135,7 +135,7 @@ BROKER_EXPORT int mosquitto_client_keepalive(const struct mosquitto *client)
 
 BROKER_EXPORT void *mosquitto_client_certificate(const struct mosquitto *client)
 {
-#ifdef WITH_TLS
+#ifdef WITH_TLS_OPENSSL
 	if(client && client->ssl){
 		return SSL_get_peer_certificate(client->ssl);
 	}else{
