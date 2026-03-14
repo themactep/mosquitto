@@ -36,6 +36,7 @@ add_executable(mosquitto
 	mux.c mux.h mux_epoll.c mux_kqueue.c mux_poll.c
 	net.c
 	$<$<BOOL:${WITH_TLS_MBEDTLS_BROKER}>:net_mbedtls_broker.c>
+	$<$<BOOL:${WITH_TLS_MBEDTLS_BROKER}>:../lib/tls_mbedtls.c>
 	../lib/net_mosq_ocsp.c ../lib/net_mosq.c ../lib/net_mosq.h
 	../lib/net_ws.c
 	../lib/packet_datatypes.c

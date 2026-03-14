@@ -538,3 +538,8 @@ ssize_t mosquitto__mbedtls_write(struct mosquitto *mosq, const void *buf, size_t
 		errno = EAGAIN;
 		return -1;
 	}
+	 errno = EPROTO;
+	return -1;
+}
+
+#endif /* WITH_TLS_MBEDTLS */
