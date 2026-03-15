@@ -31,6 +31,7 @@ Contributors:
 #endif
 
 #include <errno.h>
+#include <limits.h>
 #include <signal.h>
 
 #include "mosquitto_broker_internal.h"
@@ -159,12 +160,20 @@ int mux_epoll__handle(void)
 	struct mosquitto *context;
 	struct mosquitto__listener_sock *listensock;
 	int event_count;
+	int timeout;
 
 	memset(&ev, 0, sizeof(struct epoll_event));
 #if defined(WITH_WEBSOCKETS)
 	event_count = epoll_wait(db.epollfd, ep_events, MAX_EVENTS, 100);
 #else
-	event_count = epoll_wait(db.epollfd, ep_events, MAX_EVENTS, db.next_event_ms);
+	if(db.next_event_ms < -1){
+		timeout = -1;
+	}else if(db.next_event_ms > INT_MAX){
+		timeout = INT_MAX;
+	}else{
+		timeout = (int)db.next_event_ms;
+	}
+	event_count = epoll_wait(db.epollfd, ep_events, MAX_EVENTS, timeout);
 #endif
 
 	db.now_s = mosquitto_time();
