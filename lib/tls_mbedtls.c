@@ -364,7 +364,7 @@ static int mosquitto__mbedtls_bio_send(void *context, const unsigned char *buf, 
 	errno = 0;
 	if(!mosq) return MBEDTLS_ERR_NET_INVALID_CONTEXT;
 
-	rc = (int)send(mosq->sock, (const char *)buf, (int)len, MSG_NOSIGNAL);
+	rc = (int)send(mosq->sock, (const char *)buf, len, MSG_NOSIGNAL);
 	if(rc < 0){
 #ifdef WIN32
 		errno = WSAGetLastError();
@@ -385,7 +385,7 @@ static int mosquitto__mbedtls_bio_recv(void *context, unsigned char *buf, size_t
 	errno = 0;
 	if(!mosq) return MBEDTLS_ERR_NET_INVALID_CONTEXT;
 
-	rc = (int)recv(mosq->sock, (char *)buf, (int)len, 0);
+	rc = (int)recv(mosq->sock, (char *)buf, len, 0);
 	if(rc == 0){
 		return MBEDTLS_ERR_SSL_PEER_CLOSE_NOTIFY;
 	}else if(rc < 0){

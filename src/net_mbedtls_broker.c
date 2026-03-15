@@ -35,7 +35,7 @@ struct mosquitto *mosq = ctx;
 int rc;
 
 errno = 0;
-rc = (int)send(mosq->sock, (const char *)buf, (int)len, MSG_NOSIGNAL);
+rc = (int)send(mosq->sock, (const char *)buf, len, MSG_NOSIGNAL);
 if(rc < 0){
 if(errno == EWOULDBLOCK || errno == EAGAIN) return MBEDTLS_ERR_SSL_WANT_WRITE;
 return MBEDTLS_ERR_NET_SEND_FAILED;
@@ -49,7 +49,7 @@ struct mosquitto *mosq = ctx;
 int rc;
 
 errno = 0;
-rc = (int)recv(mosq->sock, (char *)buf, (int)len, 0);
+rc = (int)recv(mosq->sock, (char *)buf, len, 0);
 if(rc < 0){
 if(errno == EWOULDBLOCK || errno == EAGAIN) return MBEDTLS_ERR_SSL_WANT_READ;
 return MBEDTLS_ERR_NET_RECV_FAILED;
