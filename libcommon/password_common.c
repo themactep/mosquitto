@@ -73,25 +73,13 @@ struct mosquitto_pw {
 };
 
 
+/* Only required by OpenSSL-backed hash verification paths. */
+#ifdef WITH_TLS_OPENSSL
 static int pw__memcmp_const(const void *a, const void *b, size_t len)
 {
-#ifdef WITH_TLS_OPENSSL
 	return CRYPTO_memcmp(a, b, len);
-#else
-	int rc = 0;
-	const volatile char *ac = a;
-	const volatile char *bc = b;
-
-	if(!a || !b){
-		return 1;
-	}
-
-	for(size_t i=0; i<len; i++){
-		rc |= ((char *)ac)[i] ^ ((char *)bc)[i];
-	}
-	return rc;
-#endif
 }
+#endif
 
 
 /* ==================================================
