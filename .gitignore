@@ -27,6 +27,7 @@ apps/mosquitto_signal/mosquitto_signal
 
 build/
 build64/
+build-mbedtls/
 
 client/mosquitto_pub
 client/mosquitto_pub.a
